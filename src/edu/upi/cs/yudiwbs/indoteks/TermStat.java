@@ -8,8 +8,7 @@ package edu.upi.cs.yudiwbs.indoteks;
  */
 
 
-
-public class TermStat  {
+class TermStat  {
     public String term;
     private  int freq;
     private double totVal; // total value
@@ -23,7 +22,7 @@ public class TermStat  {
         this.totVal = totVal;
     }
 
-    public void incFreq() {
+    private void incFreq() {
         freq++;
     }
 
@@ -38,7 +37,7 @@ public class TermStat  {
 
     /**
      * panggil dulu calcAvg!
-     * @return
+     * @return rata2
      */
     public double getAvg() {
         return avg;

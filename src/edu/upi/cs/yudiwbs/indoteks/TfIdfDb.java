@@ -16,7 +16,7 @@ import java.util.logging.Logger;
 
 public class TfIdfDb {
     private static final Logger logger = Logger.getLogger("TfidfDb");
-    public static final int MINFREQ  = 3;  //minimum kemunculam tweet yg mengandung term supaya dihitung
+    private static final int MINFREQ  = 3;  //minimum kemunculam tweet yg mengandung term supaya dihitung
 
 
     //baca dari DB, hitung tf-idf, tulis ke DB
@@ -69,8 +69,12 @@ public class TfIdfDb {
         }
         finally {
             try {
-                pDelete.close();
-                conn.close();
+                if (pDelete != null) {
+                    pDelete.close();
+                }
+                if (conn != null) {
+                    conn.close();
+                }
             } catch (Exception e) {
                 logger.log(Level.SEVERE, null, e);
             }
@@ -111,9 +115,9 @@ public class TfIdfDb {
 
             int cc=0;
 
-            HashMap<String,Integer> tweetsHaveTermCount  = new HashMap<String,Integer>();      //jumlah doc yg mengandung sebuah term
-            ArrayList<HashMap<String,Integer>> arrTermCount = new ArrayList<HashMap<String,Integer>>(); //freq kata untuk setiap doc
-            ArrayList<Long>  arrIdInternalTw = new ArrayList<Long>(); //untuk menyimpan id
+            HashMap<String,Integer> tweetsHaveTermCount  = new HashMap<>();      //jumlah doc yg mengandung sebuah term
+            ArrayList<HashMap<String,Integer>> arrTermCount = new ArrayList<>(); //freq kata untuk setiap doc
+            ArrayList<Long>  arrIdInternalTw = new ArrayList<>(); //untuk menyimpan id
 
             Integer freq;
 
@@ -137,7 +141,7 @@ public class TfIdfDb {
                 long idInternalTw = rsTw.getLong(1);
                 arrIdInternalTw.add(idInternalTw);
                 String tw = rsTw.getString(2);
-                HashMap<String,Integer> termCount  = new HashMap<String,Integer>(); //freq term dalam satu tweet
+                HashMap<String,Integer> termCount  = new HashMap<>(); //freq term dalam satu tweet
                 cc++;
                 System.out.println(cc);
                 Scanner sc = new Scanner(tw);
@@ -162,8 +166,8 @@ public class TfIdfDb {
             double numOfTweets = cc;
 
             // hitung idf(i) = log (NumofTw / countTwHasTerm(i))
-            HashMap<String,Double> idf = new HashMap<String,Double>();
-            double jumTweet=0;
+            HashMap<String,Double> idf = new HashMap<>();
+            double jumTweet;
             for (Map.Entry<String,Integer> entry : tweetsHaveTermCount.entrySet()) {
                 //System.out.println(entry.getKey()+"="+entry.getValue());
                 //modif, untuk term hanys satu kali muncul set idf dengan 0, sebagai mark agar term tersebut dihapus
@@ -189,7 +193,10 @@ public class TfIdfDb {
                     idfVal = idf.get(key);
                     if (idfVal>=0) {   //kalau < 0 artinya diskip karena jumlah tweet yg mengandung term tersbut terlalu sedikit
                         tfidf  = entry.getValue() * idfVal ;     //rawtf * idf
-                        sb.append(entry.getKey()+"==>"+tfidf+";;"); //jangan pake ;
+                        sb.append(entry.getKey()); //jangan pake ;
+                        sb.append("==>");
+                        sb.append(tfidf);
+                        sb.append(";;");
                     }
                 }
                 pInsertTfIdf.setLong(1, idInternalTw);
@@ -212,11 +219,17 @@ public class TfIdfDb {
         }
         finally {
             try {
-                pInsertTfIdf.close();
-                pTw.close();
-                conn.commit();
-                conn.setAutoCommit(true);
-                conn.close();
+                if (pInsertTfIdf != null) {
+                    pInsertTfIdf.close();
+                }
+                if (pTw != null) {
+                    pTw.close();
+                }
+                if (conn != null) {
+                    conn.commit();
+                    conn.setAutoCommit(true);
+                    conn.close();
+                }
             } catch (Exception e) {
                 logger.log(Level.SEVERE, null, e);
             }
@@ -242,7 +255,7 @@ public class TfIdfDb {
             pw = new PrintWriter(namaFileOutput);
             String strLine;
             int cc = 0;
-            HashMap<String, TermStat> termMap = new HashMap<String, TermStat>();
+            HashMap<String, TermStat> termMap = new HashMap<>();
             String[] str;
             TermStat ts;
 
@@ -277,7 +290,7 @@ public class TfIdfDb {
                 }
 
             } //semua baris sudah dibaca
-            ArrayList<TermStat> arrTS = new ArrayList<TermStat>();
+            ArrayList<TermStat> arrTS = new ArrayList<>();
             for (Map.Entry<String, TermStat> term : termMap.entrySet()) {
                 ts = term.getValue();
                 if (ts.getFreq() < MINFREQ) {
@@ -301,9 +314,15 @@ public class TfIdfDb {
             logger.severe(e.toString());
         } finally {
             try {
-                pSel.close();
-                pw.close();
-                conn.close();
+                if (pSel != null) {
+                    pSel.close();
+                }
+                if (pw != null) {
+                    pw.close();
+                }
+                if (conn != null) {
+                    conn.close();
+                }
             } catch (Exception e) {
                 logger.log(Level.SEVERE, null, e);
             }

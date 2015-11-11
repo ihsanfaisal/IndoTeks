@@ -12,6 +12,9 @@ import java.util.logging.Logger;
  *   Created by yudiwbs (yudi@upi.edu) on 11/8/2015.
  *   Lisensi: LGPL
  *
+ *   todo: buat classify berdasarkan model yang sudah ada di db (penting!)
+ *   todo: buat kelas generik untuk koneksi ke db
+ *
  *
 
  //menyimpan hasil probabilias
@@ -114,7 +117,11 @@ public class NaiveBayes {
         double probKelas;
         double probDef;    //probabilitas default untuk kata yang freq=0
         HashMap<String,Integer> countWord;  //count word per class
-        HashMap<String,Double> probWord = new HashMap<>();    //prob word per class
+        HashMap<String,Double> probWord;    //prob word per class
+
+        public ProbKelas() {
+            probWord = new HashMap<>();
+        }
 
         public void print() {
             //untuk kepentingan debug
