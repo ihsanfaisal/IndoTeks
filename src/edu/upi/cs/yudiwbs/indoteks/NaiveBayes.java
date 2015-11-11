@@ -9,7 +9,7 @@ import java.util.logging.Level;
 import java.util.logging.Logger;
 
 /**
- *   Created by yudiwbs on 11/8/2015.
+ *   Created by yudiwbs (yudi@upi.edu) on 11/8/2015.
  *   Lisensi: LGPL
  *
  *
@@ -97,8 +97,8 @@ public class NaiveBayes {
         }
         finally {
             try {
-                pDelete.close();
-                conn.close();
+                if (pDelete!=null) pDelete.close();
+                if (conn!=null) conn.close();
             } catch (Exception e) {
                 logger.log(Level.SEVERE, null, e);
             }
@@ -114,7 +114,7 @@ public class NaiveBayes {
         double probKelas;
         double probDef;    //probabilitas default untuk kata yang freq=0
         HashMap<String,Integer> countWord;  //count word per class
-        HashMap<String,Double> probWord = new HashMap<String,Double>();    //prob word per class
+        HashMap<String,Double> probWord = new HashMap<>();    //prob word per class
 
         public void print() {
             //untuk kepentingan debug
@@ -143,6 +143,9 @@ public class NaiveBayes {
 
 
     }
+
+
+    //todo: buat yang classify yg mengambil model dari DB!
 
     private ArrayList<ProbKelas> learn(String tambahanFilter) {
         //menghitung probablitas kelas (lihat class ProbKelas)
@@ -175,7 +178,7 @@ public class NaiveBayes {
 
         int jumDocTotal  = 0;
         int jumWordTotal   = 0;  //jumlah distinct kata (total kosakata)
-        ArrayList<ProbKelas> alProbKelas = new ArrayList<ProbKelas>();
+        ArrayList<ProbKelas> alProbKelas = new ArrayList<>();
 
         String strSQLJumKelas        = "select count(*) from kelas";
         String strSQLAmbilIdKelas    = "select id_internal,id_kelas,nama_kelas from kelas";
@@ -200,7 +203,7 @@ public class NaiveBayes {
 
 
 
-        int jumKelas=-1;
+        int jumKelas;
         try  {
             Class.forName("com.mysql.jdbc.Driver");
             String strCon = "jdbc:mysql://"+dbName+"?user="+userName+"&password="+password;
@@ -210,7 +213,7 @@ public class NaiveBayes {
             rsJumKelas =  pJumKelas.executeQuery();
             if (rsJumKelas.next()) {
                 jumKelas = rsJumKelas.getInt(1);
-                //System.out.println("Jumlah kelas:"+jumKelas);
+                System.out.println("Jumlah kelas:"+jumKelas);
             } else  {
                 System.out.println("Tidak bisa mengakses tabel kelas, abort");
                 System.exit(1);
@@ -225,7 +228,7 @@ public class NaiveBayes {
 
             while (rsAmbilIdKelas.next()) {  //loop untuk setiap kelas
                 ProbKelas pk = new ProbKelas();
-                HashMap<String,Integer> countWord  = new HashMap<String,Integer>();
+                HashMap<String,Integer> countWord  = new HashMap<>();
                 pk.countWord=countWord;
 
                 int idKelas = rsAmbilIdKelas.getInt(2);
@@ -323,7 +326,7 @@ public class NaiveBayes {
         //System.out.println("klasifikasi tweet:"+tweet);
         double maxProb = -Double.MAX_VALUE;
         HashMap<String,Double> probWord;
-        double totProb = 0;
+        double totProb;
         ProbKelas maxClass=null;
 
         //cari kelas dengan prob maksimal
@@ -335,9 +338,8 @@ public class NaiveBayes {
             while (sc.hasNext()) {               //loop untuk semua kata
                 String kata = sc.next();
                 Double prob = probWord.get(kata);  //ambil probilitas kata
-                if (prob!=null) {
-                    //System.out.println("kata:"+kata+"; Prob="+prob);  //debug
-                } else {  //kata tidak ada, menggunakan nilai standar
+                if (prob==null) {
+                   //kata tidak ada, menggunakan nilai default
                     //System.out.println(" Menggunakan nilai def kata:"+kata+"; Prob="+pk.probDef);  //debug
                     prob = pk.probDef;
                 }
@@ -473,11 +475,21 @@ public class NaiveBayes {
         }
         finally {
             try {
-                pInsertProbKata.close();
-                pInsertProbKelas.close();
-                conn.commit();
-                conn.setAutoCommit(true);
-                conn.close();
+                if (pInsertProbKata != null) {
+                    pInsertProbKata.close();
+                }
+                if (pInsertProbKelas != null) {
+                    pInsertProbKelas.close();
+                }
+                if (conn != null) {
+                    conn.commit();
+                }
+                if (conn != null) {
+                    conn.setAutoCommit(true);
+                }
+                if (conn != null) {
+                    conn.close();
+                }
             } catch (Exception e) {
                 logger.log(Level.SEVERE, null, e);
                 //isError = true;
@@ -530,10 +542,10 @@ public class NaiveBayes {
         PreparedStatement pJumTw = null;
         PreparedStatement pTw = null;
         PreparedStatement pUpdatePartisi = null;
-        PreparedStatement pTwPartisi = null;
+        PreparedStatement pTwPartisi;
         ResultSet rsJumTw = null;
         ResultSet rsTw = null;
-        ResultSet rsTwPartisi = null;
+        ResultSet rsTwPartisi;
 
 
         try  {
@@ -561,7 +573,7 @@ public class NaiveBayes {
             int cc = 0;
             while (rsTw.next()) {
                 int id = rsTw.getInt(1);
-                int partisi = (int) (cc % jumFold+1);
+                int partisi = (cc % jumFold+1);
 //       		 System.out.println("id="+id);
 //       		 System.out.println("partisi:"+partisi);
                 pUpdatePartisi.setInt(1, partisi);
@@ -592,8 +604,7 @@ public class NaiveBayes {
                 int jumSalah = 0;
                 while (rsTwPartisi.next()) {
                     int id = rsTwPartisi.getInt(1);
-                    //String twOrig = rsTwPartisi.getString(2); //belum diprepro
-                    String tw = rsTwPartisi.getString(2);  //geser dari 3 jadi 2
+                    String tw = rsTwPartisi.getString(2);
                     int kelas = rsTwPartisi.getInt(3);
                     pk = classifyMem(model,tw);
 //       			 System.out.println("Kelas yang benar:"+kelas);
@@ -604,13 +615,16 @@ public class NaiveBayes {
                     } else {
                         // System.out.println("tdk cocok:");
 
+                        /*
                         System.out.println("teks:"+tw);
                         System.out.println("id:"+id);
                         System.out.println("Kelas yang benar:"+kelas);
                         System.out.println("Kelas prediksi:"  +pk.idKelas);
                         System.out.println();
+                        */
                         jumSalah++;
                     }
+                    System.out.println(id+";"+kelas+";"+pk.idKelas);
                 }
                 System.out.println("Jum cocok:"+jumCocok);
                 System.out.println("Jum salah:"+jumSalah);
@@ -639,19 +653,115 @@ public class NaiveBayes {
         }
         finally {
             try {
-                pJumTw.close();
-                pTw.close();
-                pUpdatePartisi.close();
-                rsTw.close();
-                rsJumTw.close();
-                conn.commit();
-                conn.setAutoCommit(true);
-                conn.close();
+                if (pJumTw != null) {
+                    pJumTw.close();
+                }
+                if (pTw != null) {
+                    pTw.close();
+                }
+                if (pUpdatePartisi != null) {
+                    pUpdatePartisi.close();
+                }
+                if (rsTw != null) {
+                    rsTw.close();
+                }
+                if (rsJumTw != null) {
+                    rsJumTw.close();
+                }
+                if (conn != null) {
+                    conn.commit();
+                    conn.setAutoCommit(true);
+                    conn.close();
+                }
             } catch (Exception e) {
                 logger.log(Level.SEVERE, null, e);
                 //isError = true;
             }
         }
+    }
+
+    public void prosesDataTest(String namaTableOut, String namaFieldIdOut, String namaFieldTeksOut, String namafieldPrediksiKelasOut) {
+        //todo: harusnya nggak pake learn lagi, tapi langsung ambil model dari db
+        //todo: buat classifyDB!!
+
+        ArrayList<ProbKelas> model;
+        Connection conn=null;
+        PreparedStatement pSel = null;
+        PreparedStatement pUpdate = null;
+        ResultSet rsSel = null;
+
+
+
+
+        model = learn("");  //semua dijadikan data learning
+
+        String sqlSel    = String.format("select %s,%s from %s "
+                ,namaFieldIdOut, namaFieldTeksOut, namaTableOut);
+
+        System.out.println("s="+sqlSel);
+
+        String sqlUpdate = String.format("update %s set %s = ? where %s= ?"
+                ,namaTableOut,namafieldPrediksiKelasOut,namaFieldIdOut);
+
+        try {
+            Class.forName("com.mysql.jdbc.Driver");
+            String strCon = "jdbc:mysql://"+dbName+"?user="+userName+"&password="+password;
+            conn = DriverManager.getConnection(strCon);
+            conn.setAutoCommit(false);
+
+            pSel    = conn.prepareStatement(sqlSel);
+            pUpdate = conn.prepareStatement(sqlUpdate);
+            rsSel   = pSel.executeQuery();
+
+            //loop semua rec di datatest
+            ProbKelas pk;
+            while (rsSel.next()) {
+                int id   = rsSel.getInt(1);
+                String teks = rsSel.getString(2);
+                //tebak
+                pk = classifyMem(model,teks);
+                pUpdate.setInt(1, pk.idKelas);
+                pUpdate.setInt(2, id);
+                pUpdate.addBatch();
+            }
+            pUpdate.executeBatch();
+
+        } catch (Exception e)
+        {
+            //ROLLBACK
+            logger.log(Level.SEVERE, null, e);
+            if (conn != null) {
+                try {
+                    conn.rollback();
+                } catch (SQLException e1) {
+                    logger.log(Level.SEVERE, null, e1);
+                }
+                System.out.println("Fatal Error, rollback...");
+                //isError = true;
+            }
+        }
+        finally {
+            try {
+                if (pSel != null) {
+                    pSel.close();
+                }
+                if (pUpdate != null) {
+                    pUpdate.close();
+                }
+                if (rsSel != null) {
+                    rsSel.close();
+                }
+                if (conn!=null) {
+                    conn.commit();
+                    conn.setAutoCommit(true);
+                    conn.close();
+                }
+            } catch (Exception e) {
+                logger.log(Level.SEVERE, null, e);
+                //isError = true;
+            }
+        }
+
     }
 
     public static void main(String[] args) {
@@ -663,10 +773,14 @@ public class NaiveBayes {
         t.namaFieldIdIn="id";
         t.namaFieldTeksIn="teks_prepro";
         t.namaFieldClass ="kelas";
+        //t.prosesDataTest("datatest_prepro","id","teks_prepro","kelas_tebak");
+
+
+
 
         //t.learnToDB();
 
-        t.xFoldCrossVal();
+        //t.xFoldCrossVal();
     }
 
 

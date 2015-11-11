@@ -49,7 +49,7 @@ public class Prepro {
     public String namaFieldIdOut="id";         //field id output, isinya akan disamakan dengan id input
     public String namaFieldTeksPreproOut="";   //field tempat nilai tfidf disimpan
 
-    ArrayList<String> alStopWords = new  ArrayList<String>();
+    ArrayList<String> alStopWords = new  ArrayList<>();
 
     private void loadStopWords(String namaTabel,String namaField) {
         //memindahkan data stopwords dari tabel ke memori alStopWords
@@ -105,7 +105,7 @@ public class Prepro {
             DataInputStream in = new DataInputStream(fstream);
             BufferedReader br = new BufferedReader(new InputStreamReader(in));
             String strLine;
-            ResultSet rs = null;
+            ResultSet rs;
             while ((strLine = br.readLine()) != null)   {
                 if (strLine.equals("")) {continue;}
                 //masuk ke tabel?
@@ -206,10 +206,12 @@ public class Prepro {
         }
         finally  {
             try  {
-                conn.commit();
+                if (conn!=null) {conn.commit();}
                 if (pSel != null) {pSel.close();}
                 if (pIns != null) {pIns.close();}
-                if (conn != null) {conn.close();}
+                if (conn != null) {
+                    conn.close();
+                }
             } catch (Exception e) {
                 logger.log(Level.SEVERE, null, e);
             }
@@ -247,8 +249,8 @@ public class Prepro {
         }
         finally {
             try {
-                pDelete.close();
-                conn.close();
+                if (pDelete!=null) pDelete.close();
+                if (conn!=null) conn.close();
             } catch (Exception e) {
                 logger.log(Level.SEVERE, null, e);
             }
@@ -269,10 +271,11 @@ public class Prepro {
         p.dbName="localhost/news";
         p.userName="news";
         p.password="news";
-        p.namaTableOut = "articles_prepro";         //table output
-        p.namaTableIn  = "articles";                //table input
-        p.namaFieldTeksIn ="text";                 //field teks
+        p.namaTableOut = "datatest_prepro";         //table output
+        p.namaTableIn  = "datatest";                //table input
+        p.namaFieldTeksIn ="artikel";                 //field teks
         p.namaFieldIdIn="id";                     //field id
+
         p.namaFieldIdOut="id";                    //field id output, isinya akan disamakan dengan id input
         p.namaFieldTeksPreproOut="teks_prepro";   //field tempat nilai tfidf disimpan
 
@@ -280,9 +283,7 @@ public class Prepro {
         p.proses();
 
 
-
         //p.fileStopwordsToDB("C:\\yudiwbs\\eksperimen\\news_aggregator\\stopwords.txt","stopwords","kata");
-
         //debug String out = p.preproDasar(s);
         //System.out.println(out);
     }

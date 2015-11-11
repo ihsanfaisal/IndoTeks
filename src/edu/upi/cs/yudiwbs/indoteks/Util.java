@@ -23,19 +23,20 @@ public class Util {
 
 
 
-    public void multitosingle() {
+    public void multitosingle(String namaTabelIn,String namaTabelOut) {
 
         String sqlSel = " select id,`class-Pendidikan`,`class-Politik`,`class-HukumKriminal`," +
                 "`class-SosialBudaya`,`class-Olahraga`,`class-TeknologiSains`,`class-Hiburan`," +
-                "`class-EkonomiBisnis`,`class-Kesehatan`,`class-BencanaKecelakaan` from articles";
+                "`class-EkonomiBisnis`,`class-Kesehatan`,`class-BencanaKecelakaan` from "+namaTabelIn;
 
+        System.out.println(sqlSel);
 
-        String sqlUpdate = "update articles_prepro set kelas = ? where id = ?";
+        String sqlUpdate = "update "+ namaTabelOut +" set kelas = ? where id = ?";
 
 
 
         //ambil dari data articles, pilih kelas, isi ke tabel articles_prepro.kelas
-        //kalau lebih dari satu, ambil saja yg pertamaakali ketemu
+        //kalau lebih dari satu, ambil yg terakhir
         logger.info("mulai");
         Connection conn=null;
         PreparedStatement pSel    = null;
@@ -53,6 +54,7 @@ public class Util {
             while (rsSel.next())   {
                 //efek tabel nggak dinormaliasai :(
                 id = rsSel.getLong(1);
+                System.out.println(id);
                 boolean pendidikan = rsSel.getBoolean(2);
                 boolean politik = rsSel.getBoolean(3);
                 boolean hukumKriminal = rsSel.getBoolean(4);
@@ -118,10 +120,18 @@ public class Util {
             }
         finally {
             try {
-                conn.commit();
-                pSel.close();
-                pUpdate.close();
-                conn.close();
+                if (conn != null) {
+                    conn.commit();
+                }
+                if (pSel != null) {
+                    pSel.close();
+                }
+                if (pUpdate != null) {
+                    pUpdate.close();
+                }
+                if (conn != null) {
+                    conn.close();
+                }
                 System.out.println("selesai");
             } catch (Exception e) {
                 logger.log(Level.SEVERE, null, e);
@@ -137,7 +147,8 @@ public class Util {
         t.dbName="localhost/news";
         t.userName="news";
         t.password="news";
-        t.multitosingle();
+        System.out.println("hoi");
+        t.multitosingle("datatest","datatest_prepro");
     }
 
 }
